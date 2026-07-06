@@ -1,0 +1,205 @@
+direction: right
+
+###############################################################
+# Story Creator — Multi-Agent Pipeline (Google ADK)
+###############################################################
+
+title: Multi-Agent Pipeline — Google ADK {
+  shape: text
+  near: top-center
+  style: {
+    font-size: 24
+    bold: true
+  }
+}
+
+###############################################################
+# Input
+###############################################################
+
+input: Story Request {
+  shape: rectangle
+  label: "Story Request\n─────────────\ngenre: e.g. Cars, Animals\nage_group: e.g. 6 to 8\nuser_prompt: optional characters\napi_key: from request header"
+  style: {
+    fill: "#0f172a"
+    stroke: "#6366f1"
+    font-color: "#e2e8f0"
+  }
+}
+
+###############################################################
+# Agent 1 — Story Generator
+###############################################################
+
+agent1: Agent 1 — story_generator {
+  shape: rectangle
+  label: "story_generator\n─────────────────────────────\nModel: gemini-2.5-flash\nRole: Children's book author\n\nTask:\nWrite a 150–200 word bedtime story\nbased on genre + age group\n\nDraw from: Panchatantra, Tinkle,\nHindu mythology\n\nOutput schema: StoryOutput\n  • title: str\n  • story_text: str (150–200 words)\n  • moral: str (friendship / trust /\n    respect / courage / empathy…)"
+  style: {
+    fill: "#1e1b4b"
+    stroke: "#818cf8"
+    font-color: "#e2e8f0"
+  }
+}
+
+###############################################################
+# Agent 2 — Story Reviewer
+###############################################################
+
+agent2: Agent 2 — story_reviewer {
+  shape: rectangle
+  label: "story_reviewer\n─────────────────────────────\nModel: gemini-2.5-flash\nRole: Children's content safety reviewer\n\nTask:\nCheck story for adult content,\nviolence, foul language, or\noff-topic material\n\nOutput schema: ReviewOutput\n  • is_safe: bool\n  • reason: str\n  • suggested_modifications: str"
+  style: {
+    fill: "#1e1b4b"
+    stroke: "#818cf8"
+    font-color: "#e2e8f0"
+  }
+}
+
+###############################################################
+# Safety Gate
+###############################################################
+
+safety_gate: Safe? {
+  shape: diamond
+  label: "is_safe == True?"
+  style: {
+    fill: "#1e293b"
+    stroke: "#f87171"
+    font-color: "#fca5a5"
+  }
+}
+
+retry_note: Retry {
+  shape: oval
+  label: "Append safety note\nto prompt and retry\n(max 2 attempts total)"
+  style: {
+    fill: "#1e293b"
+    stroke: "#f87171"
+    font-color: "#fca5a5"
+  }
+}
+
+fail: Pipeline Fails {
+  shape: oval
+  label: "Raise ValueError:\n'Failed to generate\na safe bedtime story'"
+  style: {
+    fill: "#1e293b"
+    stroke: "#dc2626"
+    font-color: "#fca5a5"
+  }
+}
+
+###############################################################
+# Agent 3 — Narration Director
+###############################################################
+
+agent3: Agent 3 — story_narration {
+  shape: rectangle
+  label: "story_narration\n─────────────────────────────\nModel: gemini-2.5-flash\nRole: Audio narration director\n\nTask:\nChoose the best narrator voice\nbased on age group and genre\n\nVoice options:\n  • gentle narrator\n    (British accent — toddlers / sleep)\n  • excited storyteller\n    (US accent — ages 3-5 / toys / cars)\n  • adventure guide\n    (Australian accent — ages 6-8 / action)\n  • wise elder\n    (Indian accent — ages 8+ / mythology)\n\nOutput schema: NarrationOutput\n  • voice_name: str (one of above)\n  • reason: str"
+  style: {
+    fill: "#0c1a2e"
+    stroke: "#38bdf8"
+    font-color: "#e2e8f0"
+  }
+}
+
+###############################################################
+# Agent 4 — Cover Art Director
+###############################################################
+
+agent4: Agent 4 — cover_generator {
+  shape: rectangle
+  label: "cover_generator\n─────────────────────────────\nModel: gemini-2.5-flash\nRole: Art director for children's publisher\n\nTask:\nGenerate a detailed image prompt\nfor Imagen 3 to produce a\nwarm, child-friendly cover\n\nPrompt describes:\n  • Main characters + expressions\n  • Setting / background\n  • Style (pastel, soft watercolor cartoon)\n  • Color palette + mood\n\nOutput schema: CoverPromptOutput\n  • image_prompt: str\n  • scene_description: str"
+  style: {
+    fill: "#0c1a2e"
+    stroke: "#38bdf8"
+    font-color: "#e2e8f0"
+  }
+}
+
+###############################################################
+# Agent 5 — Video Director
+###############################################################
+
+agent5: Agent 5 — video_generator {
+  shape: rectangle
+  label: "video_generator\n─────────────────────────────\nModel: gemini-2.5-flash\nRole: Storyboard artist + animator\n\nTask:\nDesign a Veo 3.1 video prompt\nand 3 storyboard scenes covering:\n  Scene 1 — Story Beginning\n  Scene 2 — Turning Point / Middle\n  Scene 3 — Resolution / Ending\n\nEach scene has:\n  • image_prompt for SVG illustration\n  • narrative_segment (story excerpt)\n\nOutput schema: VideoPromptOutput\n  • video_prompt: str\n  • storyboard_scenes: list[StoryboardScene] (3)"
+  style: {
+    fill: "#0c1a2e"
+    stroke: "#38bdf8"
+    font-color: "#e2e8f0"
+  }
+}
+
+###############################################################
+# Output
+###############################################################
+
+output: Pipeline Output {
+  shape: rectangle
+  label: "Structured Pipeline Output (dict)\n──────────────────────────────────────\ntitle          → story title\nstory_text     → 150–200 word narrative\nmoral          → lesson / value\nvoice_name     → selected narrator\ncover_prompt   → Imagen 3 prompt\nvideo_prompt   → Veo 3.1 prompt\nstoryboard_scenes → 3 scene objects"
+  style: {
+    fill: "#0f2a1a"
+    stroke: "#10b981"
+    font-color: "#a7f3d0"
+  }
+}
+
+###############################################################
+# Media Stage (post-pipeline)
+###############################################################
+
+media: Media Generation (post-pipeline) {
+  shape: rectangle
+  label: "After agents complete:\n──────────────────────────────────\na) gTTS → MP3 narration (voice_name → accent)\nb) Imagen 3 → PNG cover\n   (fallback: Gemini → SVG)\nc) Gemini → 3x SVG storyboard images\nd) Veo 3.1 → MP4 video\n   (only if VEO_ENABLED=true)\ne) All files uploaded to Convex Storage\nf) Story record saved to Convex DB"
+  style: {
+    fill: "#1a0f2e"
+    stroke: "#a855f7"
+    font-color: "#e9d5ff"
+  }
+}
+
+###############################################################
+# Connections
+###############################################################
+
+input -> agent1: "genre + age_group + prompt"
+agent1 -> agent2: "StoryOutput draft"
+agent2 -> safety_gate: "ReviewOutput"
+safety_gate -> agent3: "yes ✓" {
+  style.stroke: "#10b981"
+  style.font-color: "#10b981"
+}
+safety_gate -> retry_note: "no ✗ (attempt 1)" {
+  style.stroke: "#ef4444"
+  style.font-color: "#ef4444"
+}
+retry_note -> agent1: "rewrite with safety hint"
+agent1 -> agent2: "2nd attempt"
+safety_gate -> fail: "no ✗ (attempt 2 also fails)" {
+  style.stroke: "#dc2626"
+  style.font-color: "#dc2626"
+}
+agent3 -> agent4: "NarrationOutput\n(voice_name)"
+agent4 -> agent5: "CoverPromptOutput\n(image_prompt)"
+agent5 -> output: "VideoPromptOutput\n(video_prompt + 3 scenes)"
+output -> media: "pass to media layer"
+
+###############################################################
+# Model Fallback Sidebar
+###############################################################
+
+fallback: Model Fallback Chain {
+  shape: rectangle
+  label: "Retry + Fallback Strategy\n──────────────────────────\nEvery model call is wrapped with\ntenacity exponential backoff:\n  • 4 retry attempts per call\n  • waits 3–30 seconds between tries\n  • retries on: 503 / 429 / quota / overloaded\n\nModel fallback order:\n  1. gemini-2.5-flash  (primary)\n  2. gemini-2.0-flash  (fallback)\n  3. gemini-2.0-flash-lite (last resort)"
+  style: {
+    fill: "#1a1200"
+    stroke: "#f59e0b"
+    font-color: "#fde68a"
+  }
+}
+
+agent1 -> fallback: "all LLM calls use this" {
+  style.stroke: "#f59e0b"
+  style.stroke-dash: 4
+}

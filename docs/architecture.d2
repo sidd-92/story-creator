@@ -1,0 +1,259 @@
+direction: down
+
+###############################################################
+# Story Creator — Complete System Architecture
+###############################################################
+
+title: Story Creator — System Architecture {
+  shape: text
+  near: top-center
+  style: {
+    font-size: 28
+    bold: true
+  }
+}
+
+# ── Actor ────────────────────────────────────────────────────
+
+user: User {
+  shape: person
+}
+
+# ── Frontend ─────────────────────────────────────────────────
+
+frontend: Frontend — React + Vite (port 3001) {
+  style: {
+    fill: "#0f172a"
+    stroke: "#6366f1"
+    border-radius: 8
+  }
+
+  ui: Story Creator UI {
+    shape: rectangle
+    label: "Story Creator UI\nGenre · Age Group · Prompt picker\nStory Library · Book Viewer\nAudio Player · Storyboard Carousel"
+    style: {
+      fill: "#1e293b"
+      stroke: "#818cf8"
+    }
+  }
+
+  sdk: Convex Real-time SDK {
+    shape: rectangle
+    label: "Convex SDK\nuseQuery(api.stories.list)\nAuto-updates when DB changes"
+    style: {
+      fill: "#1e293b"
+      stroke: "#818cf8"
+    }
+  }
+
+  ls: API Key (localStorage) {
+    shape: rectangle
+    label: "Google API Key\nStored in browser localStorage\nNever sent to server storage\nPassed in X-Google-Api-Key header"
+    style: {
+      fill: "#1e293b"
+      stroke: "#f59e0b"
+    }
+  }
+}
+
+# ── Backend ──────────────────────────────────────────────────
+
+backend: Backend — FastAPI Python (port 8000) {
+  style: {
+    fill: "#0f172a"
+    stroke: "#8b5cf6"
+    border-radius: 8
+  }
+
+  endpoint: POST /api/generate {
+    shape: rectangle
+    label: "POST /api/generate\nOrchestrates the full pipeline\nReads X-Google-Api-Key header\nReturns StoryResponse JSON"
+    style: {
+      fill: "#1e293b"
+      stroke: "#a78bfa"
+    }
+  }
+
+  pipeline: Multi-Agent Pipeline {
+    shape: rectangle
+    label: "5 Google ADK Agents\n(agent.py)\nSequential: story → review → voice → cover → video\nModel: gemini-2.5-flash (with 2.0-flash fallback)"
+    style: {
+      fill: "#1e293b"
+      stroke: "#a78bfa"
+    }
+  }
+
+  retry: Safety Retry Loop {
+    shape: diamond
+    label: "Story safe?\nmax 2 attempts"
+    style: {
+      fill: "#1e293b"
+      stroke: "#f87171"
+    }
+  }
+
+  media: Media Generation (main.py) {
+    shape: rectangle
+    label: "1. TTS narration via gTTS\n2. Cover image via Imagen 3 (PNG)\n   Fallback: SVG via Gemini\n3. Storyboard: 3 SVGs via Gemini\n4. Video via Veo 3.1 (if VEO_ENABLED=true)"
+    style: {
+      fill: "#1e293b"
+      stroke: "#a78bfa"
+    }
+  }
+
+  health: GET /health {
+    shape: rectangle
+    label: "Health Check\nReturns status + timestamp"
+    style: {
+      fill: "#1e293b"
+      stroke: "#64748b"
+    }
+  }
+}
+
+# ── Google AI ────────────────────────────────────────────────
+
+google_ai: Google AI Services {
+  style: {
+    fill: "#0f172a"
+    stroke: "#f59e0b"
+    border-radius: 8
+  }
+
+  gemini_flash: Gemini 2.5 Flash {
+    shape: cloud
+    label: "gemini-2.5-flash\nPrimary model for all 5 agents\nand SVG illustration generation\nStructured JSON output via Pydantic schemas"
+    style: {
+      fill: "#1e293b"
+      stroke: "#fbbf24"
+    }
+  }
+
+  gemini_fallback: Gemini 2.0 Flash {
+    shape: cloud
+    label: "gemini-2.0-flash / gemini-2.0-flash-lite\nAutomatic fallback on 503 / quota errors\nExponential backoff (tenacity retry)"
+    style: {
+      fill: "#1e293b"
+      stroke: "#fbbf24"
+    }
+  }
+
+  imagen: Imagen 3 {
+    shape: cloud
+    label: "imagen-3.0-generate-001\nHigh-quality cover illustration (PNG 4:3)\nRequires Imagen enabled in AI Studio\nFalls back to Gemini SVG if unavailable"
+    style: {
+      fill: "#1e293b"
+      stroke: "#fbbf24"
+    }
+  }
+
+  veo: Veo 3.1 {
+    shape: cloud
+    label: "veo-3.1-fast-generate-001\n8-second story video clip\nOnly runs if VEO_ENABLED=true in .env\nUses cover image as first frame"
+    style: {
+      fill: "#1e293b"
+      stroke: "#fbbf24"
+    }
+  }
+
+  gtts: gTTS {
+    shape: cloud
+    label: "Google Text-to-Speech (gTTS)\nGenerates MP3 narration audio\nAccent mapped to voice character:\nBritish · Australian · Indian · US"
+    style: {
+      fill: "#1e293b"
+      stroke: "#fbbf24"
+    }
+  }
+}
+
+# ── Convex ───────────────────────────────────────────────────
+
+convex: Convex Platform {
+  style: {
+    fill: "#0f172a"
+    stroke: "#10b981"
+    border-radius: 8
+  }
+
+  db: stories Table {
+    shape: cylinder
+    label: "stories table\ntitle · genre · ageGroup · storyText\nmoral · voiceName · createdAt\ncoverImageId · narrationAudioId\nvideoStorageId · storyboard[]"
+    style: {
+      fill: "#1e293b"
+      stroke: "#34d399"
+    }
+  }
+
+  storage: Convex File Storage {
+    shape: cylinder
+    label: "Convex Storage\nNarration MP3\nCover PNG or SVG\nStoryboard SVGs (3x)\nVideo MP4 (optional)"
+    style: {
+      fill: "#1e293b"
+      stroke: "#34d399"
+    }
+  }
+
+  mutations: Convex Mutations {
+    shape: rectangle
+    label: "stories:addStory\nstories:generateUploadUrl\nstories:remove"
+    style: {
+      fill: "#1e293b"
+      stroke: "#34d399"
+    }
+  }
+
+  queries: Convex Queries {
+    shape: rectangle
+    label: "stories:list\nResolves all storage IDs\nto public HTTPS URLs"
+    style: {
+      fill: "#1e293b"
+      stroke: "#34d399"
+    }
+  }
+}
+
+###############################################################
+# Connections
+###############################################################
+
+# User interacts with UI
+user -> frontend.ui: "1. Select genre, age group\n   and optional character prompt"
+
+# API key flow
+frontend.ls -> frontend.ui: "reads key per request"
+
+# Frontend calls backend
+frontend.ui -> backend.endpoint: "2. POST /api/generate\n   X-Google-Api-Key: AIza..."
+
+# Backend pipeline
+backend.endpoint -> backend.pipeline: "3. asyncio.to_thread(run_story_creator_pipeline)"
+backend.pipeline -> backend.retry: "safety check result"
+backend.retry -> backend.pipeline: "unsafe → rewrite (max 2x)"
+backend.retry -> backend.media: "safe → generate media"
+
+# Pipeline calls AI
+backend.pipeline -> google_ai.gemini_flash: "4. story · review · voice · cover · video prompts"
+google_ai.gemini_flash -> google_ai.gemini_fallback: "503 / quota → automatic fallback"
+
+# Media generation calls AI
+backend.media -> google_ai.gtts: "5a. story text → narration MP3"
+backend.media -> google_ai.imagen: "5b. cover prompt → PNG"
+backend.media -> google_ai.gemini_flash: "5c. 3x scene prompt → SVG"
+backend.media -> google_ai.veo: "5d. video prompt → MP4 (optional)"
+
+# Upload to Convex Storage
+backend.endpoint -> convex.storage: "6. Upload MP3 + PNG/SVG + MP4"
+convex.storage -> convex.mutations: "returns storageId per file"
+
+# Save to Convex DB
+backend.endpoint -> convex.mutations: "7. addStory(title, storyboard[], ...)"
+convex.mutations -> convex.db: "insert row"
+
+# Frontend reads from Convex in real-time
+convex.queries -> convex.db: "query stories desc"
+convex.queries -> convex.storage: "getUrl(storageId) per file"
+convex.queries -> frontend.sdk: "8. push updated story list"
+frontend.sdk -> frontend.ui: "9. re-render library"
+
+# User reads result
+frontend.ui -> user: "10. Book Viewer opens:\n    cover · audio player\n    storyboard carousel · moral"
