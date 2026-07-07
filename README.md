@@ -2,6 +2,8 @@
 
 A kid-friendly bedtime story app built with Google ADK multi-agent pipelines, Convex real-time database, and a Vite React frontend. Submitted for the Kaggle Capstone challenge.
 
+![Story Creator Dashboard](image.png)
+
 ---
 
 ## Architecture
@@ -18,13 +20,13 @@ story-creator/                  ← Turborepo monorepo root
 
 Five sequential ADK agents power each story:
 
-| Agent | Model | Role |
-|---|---|---|
-| **Story Generator** | Gemini 2.5 Flash | Writes a 300–500 word bedtime story with a moral |
-| **Story Reviewer** | Gemini 2.5 Flash | Safety-checks the content for kids |
-| **Narration Director** | Gemini 2.5 Flash | Selects the best narrator voice |
-| **Cover Art Director** | Gemini 2.5 Flash + Imagen 3 | Generates a cover illustration (SVG fallback) |
-| **Storyboard Artist** | Gemini 2.5 Flash + Veo 3.1 | Designs a video / animated storyboard |
+| Agent                  | Model                       | Role                                             |
+| ---------------------- | --------------------------- | ------------------------------------------------ |
+| **Story Generator**    | Gemini 2.5 Flash            | Writes a 300–500 word bedtime story with a moral |
+| **Story Reviewer**     | Gemini 2.5 Flash            | Safety-checks the content for kids               |
+| **Narration Director** | Gemini 2.5 Flash            | Selects the best narrator voice                  |
+| **Cover Art Director** | Gemini 2.5 Flash + Imagen 3 | Generates a cover illustration (SVG fallback)    |
+| **Storyboard Artist**  | Gemini 2.5 Flash + Veo 3.1  | Designs a video / animated storyboard            |
 
 ### Tech Stack
 
@@ -89,17 +91,20 @@ VEO_ENABLED=false          # set to true to enable Veo video generation
 ### 5 — Start all services
 
 **Terminal 1 — Convex dev server (keep running)**
+
 ```bash
 npx convex dev
 ```
 
 **Terminal 2 — FastAPI backend**
+
 ```bash
 cd apps/backend
 uv run uvicorn app.main:app --reload --port 8000
 ```
 
 **Terminal 3 — Vite frontend**
+
 ```bash
 cd apps/frontend
 npm run dev
@@ -117,9 +122,9 @@ The FastAPI server exposes Swagger docs at [http://localhost:8000/docs](http://l
 
 ```json
 {
-  "genre": "Nature",
-  "ageGroup": "From 3 to 5",
-  "prompt": "A brave fox named Arjun who loves to paint"
+	"genre": "Nature",
+	"ageGroup": "From 3 to 5",
+	"prompt": "A brave fox named Arjun who loves to paint"
 }
 ```
 
@@ -133,11 +138,11 @@ Returns `{ "status": "ok" }`.
 
 ## Graceful Fallbacks
 
-| Feature | Primary | Fallback |
-|---|---|---|
-| Cover image | Imagen 3 (PNG) | Gemini-generated SVG illustration |
-| Video | Veo 3.1 (MP4) | 3-scene storyboard with SVG frames |
-| Narration | gTTS (regional accent) | Standard US accent gTTS |
+| Feature     | Primary                | Fallback                           |
+| ----------- | ---------------------- | ---------------------------------- |
+| Cover image | Imagen 3 (PNG)         | Gemini-generated SVG illustration  |
+| Video       | Veo 3.1 (MP4)          | 3-scene storyboard with SVG frames |
+| Narration   | gTTS (regional accent) | Standard US accent gTTS            |
 
 ---
 
@@ -145,10 +150,10 @@ Returns `{ "status": "ok" }`.
 
 The app is deployed as two separate Render services:
 
-| Service | Type | Root Directory | Start Command |
-|---|---|---|---|
-| Backend | Web Service | `apps/backend` | `uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
-| Frontend | Static Site | `apps/frontend` | Publish `dist/` after `npm install && npm run build` |
+| Service  | Type        | Root Directory  | Start Command                                             |
+| -------- | ----------- | --------------- | --------------------------------------------------------- |
+| Backend  | Web Service | `apps/backend`  | `uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| Frontend | Static Site | `apps/frontend` | Publish `dist/` after `npm install && npm run build`      |
 
 Key gotchas:
 
