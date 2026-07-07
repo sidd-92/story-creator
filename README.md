@@ -33,6 +33,8 @@ Five sequential ADK agents power each story:
 - **Database & Storage:** Convex (real-time queries, file storage for audio / image / video)
 - **Monorepo:** Turborepo
 
+See [`apps/backend/README.md`](apps/backend/README.md) and [`apps/frontend/README.md`](apps/frontend/README.md) for per-app setup and deployment details.
+
 ---
 
 ## Quick Start
@@ -136,6 +138,23 @@ Returns `{ "status": "ok" }`.
 | Cover image | Imagen 3 (PNG) | Gemini-generated SVG illustration |
 | Video | Veo 3.1 (MP4) | 3-scene storyboard with SVG frames |
 | Narration | gTTS (regional accent) | Standard US accent gTTS |
+
+---
+
+## Deployment
+
+The app is deployed as two separate Render services:
+
+| Service | Type | Root Directory | Start Command |
+|---|---|---|---|
+| Backend | Web Service | `apps/backend` | `uv run uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
+| Frontend | Static Site | `apps/frontend` | Publish `dist/` after `npm install && npm run build` |
+
+Key gotchas:
+
+- The frontend must be built with `VITE_API_URL` pointing at the backend's Render URL — without it, requests go to the frontend's own static host and fail. See [`apps/frontend/README.md`](apps/frontend/README.md).
+- Free-tier Render web services spin down after ~15 min idle. A Render Cron Job hitting `GET /health` on a schedule (e.g. every 10 min) keeps the backend warm without upgrading to a paid instance.
+- Env vars for both services are listed in their respective app READMEs.
 
 ---
 
