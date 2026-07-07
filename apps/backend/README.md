@@ -2,6 +2,8 @@
 
 FastAPI service that runs the Google ADK multi-agent pipeline (story generation, safety review, narration, cover art, and storyboard/video) and pushes results to Convex.
 
+![API Docs](image.png)
+
 ## Local development
 
 ```bash
@@ -14,14 +16,14 @@ Docs available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
 ## Environment variables
 
-| Variable | Required | Notes |
-|---|---|---|
-| `GOOGLE_API_KEY` | Yes, unless using Vertex AI | Google AI Studio key. Can also be supplied per-request via the `X-Google-Api-Key` header. |
-| `CONVEX_URL` | Yes | App raises a 500 on `/api/generate` if unset. |
-| `GOOGLE_CLOUD_PROJECT` | Only for Vertex AI | Used instead of `GOOGLE_API_KEY`. |
-| `GOOGLE_CLOUD_LOCATION` | No | Defaults to `"global"`. |
-| `IMAGEN_ENABLED` | No | `true`/`false` — gates Imagen 3 cover art. |
-| `VEO_ENABLED` | No | `true`/`false` — gates Veo 3.1 video generation. |
+| Variable                | Required                    | Notes                                                                                     |
+| ----------------------- | --------------------------- | ----------------------------------------------------------------------------------------- |
+| `GOOGLE_API_KEY`        | Yes, unless using Vertex AI | Google AI Studio key. Can also be supplied per-request via the `X-Google-Api-Key` header. |
+| `CONVEX_URL`            | Yes                         | App raises a 500 on `/api/generate` if unset.                                             |
+| `GOOGLE_CLOUD_PROJECT`  | Only for Vertex AI          | Used instead of `GOOGLE_API_KEY`.                                                         |
+| `GOOGLE_CLOUD_LOCATION` | No                          | Defaults to `"global"`.                                                                   |
+| `IMAGEN_ENABLED`        | No                          | `true`/`false` — gates Imagen 3 cover art.                                                |
+| `VEO_ENABLED`           | No                          | `true`/`false` — gates Veo 3.1 video generation.                                          |
 
 ## Deployment (Render)
 
