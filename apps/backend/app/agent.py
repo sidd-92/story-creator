@@ -256,10 +256,17 @@ def run_story_creator_pipeline(
     words = story_result.story_text.split()
     n = len(words)
     b = [0, n // 3, 2 * n // 3, n]
-    scenes = [
-        {"scene_number": i + 1, "narrative_segment": " ".join(words[b[i]:b[i + 1]])}
-        for i in range(3)
-    ]
+    scenes = []
+    for i in range(3):
+        segment = " ".join(words[b[i]:b[i + 1]])
+        scenes.append({
+            "scene_number": i + 1,
+            "narrative_segment": segment,
+            "image_prompt": (
+                f"{cover_prompt_result.image_prompt} "
+                f"Depict this specific moment from the story: {segment[:220]}"
+            ),
+        })
 
     return {
         "title": story_result.title,

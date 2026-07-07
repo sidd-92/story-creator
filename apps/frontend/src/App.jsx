@@ -454,7 +454,9 @@ function BookViewer({ story, onBack }) {
                 <span className="meta-pill">👶 {story.ageGroup}</span>
               </div>
             </div>
-            <div className="book-text">{story.storyText}</div>
+            <div className="book-text">
+              {sceneImages.length > 0 ? sceneImages[currentScene]?.narrative_segment : story.storyText}
+            </div>
           </div>
           <div className="moral-box">
             <span className="moral-icon">💡</span>

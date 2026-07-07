@@ -214,7 +214,7 @@ async def _run_pipeline(job_id: str, request: StoryRequest, api_key: Optional[st
 
         client = get_genai_client(api_key=api_key)
 
-        # Step 2 — TTS + Cover image (concurrent)
+        # Step 2 — TTS + one image per storyboard scene (all concurrent)
         t2 = time.time()
 
         async def _gen_tts():
@@ -225,58 +225,67 @@ async def _run_pipeline(job_id: str, request: StoryRequest, api_key: Optional[st
                 client,
             )
 
-        async def _gen_cover():
+        async def _gen_scene_image(scene_prompt: str, scene_number: int):
             mode = request.imageMode
-            cover_prompt = pipeline_data["cover_prompt"]
             if mode == "svg":
-                logger.info("[Image/Cover] SVG mode — skipping AI generation.")
-                svg_bytes = await asyncio.to_thread(generate_svg_illustration, client, cover_prompt)
+                logger.info(f"[Image/Scene{scene_number}] SVG mode.")
+                svg_bytes = await asyncio.to_thread(generate_svg_illustration, client, scene_prompt)
                 return svg_bytes, "image/svg+xml"
 
-            img_bytes = await asyncio.to_thread(generate_cover_image, client, cover_prompt)
+            img_bytes = await asyncio.to_thread(generate_cover_image, client, scene_prompt)
             if img_bytes:
                 return img_bytes, "image/png"
 
-            img_bytes = await asyncio.to_thread(generate_gemini_flash_image, client, cover_prompt)
+            img_bytes = await asyncio.to_thread(generate_gemini_flash_image, client, scene_prompt)
             if img_bytes:
                 return img_bytes, "image/png"
 
             raise RuntimeError(
-                "Nano Banana (gemini-2.5-flash-image) returned no image and Imagen 3 is not enabled. "
-                "Check your API quota or switch to SVG mode."
+                f"Nano Banana (gemini-2.5-flash-image) returned no image for scene {scene_number} "
+                "and Imagen 3 is not enabled. Check your API quota or switch to SVG mode."
             )
 
+        async def _gen_all_scene_images():
+            return await asyncio.gather(*[
+                _gen_scene_image(s["image_prompt"], s["scene_number"])
+                for s in pipeline_data["storyboard_scenes"]
+            ])
+
         try:
-            tts_result, cover_result = await asyncio.gather(_gen_tts(), _gen_cover())
+            tts_result, scene_image_results = await asyncio.gather(_gen_tts(), _gen_all_scene_images())
         except RuntimeError as img_err:
             logger.error(f"[Job/{job_id}] AI image failed: {img_err}")
             _jobs[job_id] = {"status": "failed", "error": str(img_err), "storyId": None, "title": pipeline_data["title"]}
             return
 
         audio_bytes, audio_mime = tts_result
-        cover_bytes, cover_mime = cover_result
         logger.info(f"[Job/{job_id}] Step 2 done in {time.time()-t2:.2f}s.")
 
-        # Step 3 — Upload TTS + cover image
+        # Step 3 — Upload TTS + each scene image
         narration_audio_id = None
-        cover_image_id = None
         try:
             narration_audio_id = upload_to_convex(convex_url, audio_bytes, audio_mime)
         except Exception as e:
             logger.error(f"[Job/{job_id}] TTS upload failed: {e}")
-        try:
-            cover_image_id = upload_to_convex(convex_url, cover_bytes, cover_mime)
-        except Exception as e:
-            logger.error(f"[Job/{job_id}] Cover upload failed: {e}")
+
+        scene_image_ids = [None, None, None]
+        for idx, (img_bytes, img_mime) in enumerate(scene_image_results):
+            try:
+                scene_image_ids[idx] = upload_to_convex(convex_url, img_bytes, img_mime)
+            except Exception as e:
+                logger.error(f"[Job/{job_id}] Scene {idx + 1} image upload failed: {e}")
+
+        cover_image_id = scene_image_ids[0]
 
         # Step 4 — Video (opt-in via UI or VEO_ENABLED env var)
         video_storage_id = None
         veo_requested = request.enableVeo or os.getenv("VEO_ENABLED") == "true"
         if veo_requested:
+            first_bytes, first_mime = scene_image_results[0]
             video_bytes = generate_veo_video(
                 client,
                 pipeline_data.get("cover_prompt", ""),
-                cover_bytes if cover_mime == "image/png" else None,
+                first_bytes if first_mime == "image/png" else None,
                 duration_seconds=request.videoDurationSeconds,
                 force=True,
             )
@@ -286,11 +295,11 @@ async def _run_pipeline(job_id: str, request: StoryRequest, api_key: Optional[st
                 except Exception as e:
                     logger.error(f"[Job/{job_id}] Video upload failed: {e}")
 
-        # Step 5 — Build storyboard using cover image (no per-scene generation)
+        # Step 5 — Build storyboard, each scene pointing at its own generated image
         storyboard_frames = [
-            {"scene_number": s["scene_number"], "narrative_segment": s["narrative_segment"], "imageId": cover_image_id}
-            for s in pipeline_data["storyboard_scenes"]
-            if cover_image_id
+            {"scene_number": s["scene_number"], "narrative_segment": s["narrative_segment"], "imageId": scene_image_ids[i]}
+            for i, s in enumerate(pipeline_data["storyboard_scenes"])
+            if scene_image_ids[i]
         ]
 
         # Step 6 — Save to Convex
