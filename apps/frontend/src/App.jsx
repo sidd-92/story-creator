@@ -6,6 +6,11 @@ import { api } from '../../../convex/_generated/api';
 // Constants
 // ---------------------------------------------------------------------------
 
+// In dev, Vite's proxy (vite.config.js) forwards relative /api paths to
+// localhost:8000. In production there's no proxy, so point at the deployed
+// backend via VITE_API_URL.
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 const GENRES = [
   { label: '🌿 Nature', value: 'Nature' },
   { label: '🐾 Animals', value: 'Animals' },
@@ -572,7 +577,7 @@ export default function App() {
       const updates = await Promise.all(
         pending.map(async job => {
           try {
-            const res = await fetch(`/api/job/${job.jobId}`);
+            const res = await fetch(`${API_BASE}/api/job/${job.jobId}`);
             if (!res.ok) return null;
             return await res.json(); // {jobId, status, title, error, storyId}
           } catch { return null; }
@@ -638,7 +643,7 @@ export default function App() {
     setShowImageModal(false);
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/generate', {
+      const res = await fetch(`${API_BASE}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Google-Api-Key': apiKey },
         body: JSON.stringify({ genre, ageGroup, prompt: prompt.trim() || undefined, imageMode, durationSeconds, enableVeo, videoDurationSeconds }),
